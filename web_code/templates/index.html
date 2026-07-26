@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="workflow-panel">
+    <nav class="module-tabs" aria-label="Workflow Modules">
+        <button class="module-tab active" data-module="generate" data-index="01">Structure Generation</button>
+        <button class="module-tab" data-module="relax" data-index="02">Relaxation</button>
+        <button class="module-tab" data-module="phase" data-index="03">Phase Stability</button>
+        <button class="module-tab" data-module="mechanical" data-index="04">Mechanical Properties</button>
+        <button class="module-tab" data-module="stress" data-index="05">Stress-Strain</button>
+        <button class="module-tab" data-module="md" data-index="06">Molecular Dynamics</button>
+    </nav>
+
+    <div class="module-page active" id="module-generate">
+        <div class="page-title">
+            <h2>Structure Generation</h2>
+            <p>BCC / FCC / HCP High-Entropy Alloy Structure Builder</p>
+        </div>
+        <form class="task-form" data-kind="generate">
+            <div class="form-grid">
+                <label>Elements <input name="elements" placeholder="eg. Hf Nb Ta Ti Zr" data-default-value="Hf Nb Ta Ti Zr"></label>
+                <label>Ratios <input name="ratios" placeholder="eg. 1 1 1 1 1" data-default-value="1 1 1 1 1"></label>
+                <label>Crystal Structure
+                    <select name="crystal_structure">
+                        <option value="bcc">BCC</option>
+                        <option value="fcc">FCC</option>
+                        <option value="hcp">HCP</option>
+                    </select>
+                </label>
+                <label>Lattice Constant <input name="lattice_constant" type="number" step="0.001" placeholder="eg. 3.0" data-default-value="3.0"></label>
+                <label>HCP C/A <input name="hcp_c_over_a" type="number" step="0.001" placeholder="eg. 1.633" data-default-value="1.633"></label>
+                <label>Supercell <input name="supercell" placeholder="eg. 4 4 4" data-default-value="4 4 4"></label>
+                <label>Seed <input name="seed" type="number" placeholder="eg. 42" data-default-value="42"></label>
+                <label>Number Of Structures <input name="num_structures" type="number" min="1" placeholder="eg. 5" data-default-value="5"></label>
+                <label class="wide path-field">Output Directory
+                    <span class="path-line">
+                        <input name="output_dir" value="{{ defaults.generated_dir }}" placeholder="eg. calculator_runs/generated_structures" data-default-path="{{ defaults.generated_dir }}">
+                        <button type="button" class="browse-btn">Browse</button>
+                    </span>
+                </label>
+            </div>
+            <div class="action-row">
+                <button class="primary-btn" type="submit">Run Structure Generation</button>
+                <button class="danger-btn stop-btn" type="button" data-stop disabled>Terminate Task</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="module-page" id="module-relax">
+        <div class="page-title">
+            <h2>Relaxation</h2>
+            <p>Relax Generated CIF/POSCAR Structures With CHGNet</p>
+        </div>
+        <form class="task-form" data-kind="relax">
+            <div class="form-grid">
+                <label class="wide">CHGNet Model
+                    <select name="model" data-model-select><option value="">Default (0.3.0)</option></select>
+                </label>
+                <label class="wide path-field">Input Directory
+                    <span class="path-line">
+                        <input name="input_dir" value="{{ defaults.generated_dir }}" placeholder="eg. calculator_runs/generated_structures" data-default-path="{{ defaults.generated_dir }}">
+                        <button type="button" class="browse-btn">Browse</button>
+                    </span>
+                </label>
+                <label class="wide path-field">Output Directory
+                    <span class="path-line">
+                        <input name="output_dir" value="{{ defaults.relaxed_dir }}" placeholder="eg. calculator_runs/relaxed_results" data-default-path="{{ defaults.relaxed_dir }}">
+                        <button type="button" class="browse-btn">Browse</button>
+                    </span>
+                </label>
+                <label>Input Format
+                    <select name="input_format">
+                        <option value="auto">Auto</option>
+                        <option value="poscar">POSCAR</option>
+                        <option value="cif">CIF</option>
+                    </select>
+                </label>
+                <label>Ediffg <input name="ediffg" type="number" step="0.001" placeholder="eg. -0.005" data-default-value="-0.005"></label>
+                <label>Nsw <input name="nsw" type="number" placeholder="eg. 200" data-default-value="200"></label>
+                <label>Isif <input name="isif" type="number" placeholder="eg. 3" data-default-value="3"></label>
+                <label>Log Interval <input name="loginterval" type="number" placeholder="eg. 1" data-default-value="1"></label>
+                <label class="check"><input name="recursive" type="checkbox"> Recursive Scan</label>
+                <label class="check"><input name="verbose" type="checkbox"> Verbose Output</label>
+            </div>
+            <div class="action-row">
+                <button class="primary-btn" type="submit">Run CHGNet Relaxation</button>
+                <button class="danger-btn stop-btn" type="button" data-stop disabled>Terminate Task</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="module-page" id="module-phase">
+        <div class="page-title">
+            <h2>Phase Stability</h2>
+            <p>Compare Candidate BCC / FCC / HCP Phase Energies</p>
+        </div>
+        <form class="task-form" data-kind="phase">
+            <div class="form-grid">
+                <label class="wide">CHGNet Model
+                    <select name="model" data-model-select><option value="">Default (0.3.0)</option></select>
+                </label>
+                <label>Mode
+                    <select name="mode" id="phase-mode">
+                        <option value="fixed">Fixed Composition</option>
+                        <option value="binary">Binary Scan</option>
+                    </select>
+                </label>
+                <label>Task Name <input name="task_name" placeholder="eg. phase_scan_01"></label>
+                <fieldset class="wide phase-box">
+                    <legend>Candidate Phases</legend>
+                    <label class="check"><input name="phases" type="checkbox" value="bcc" checked> BCC</label>
+                    <label class="check"><input name="phases" type="checkbox" value="fcc" checked> FCC</label>
+                    <label class="check"><input name="phases" type="checkbox" value="hcp" checked> HCP</label>
+                </fieldset>
+                <label class="fixed-only">Elements <input name="elements" placeholder="eg. Hf Nb Ta Ti Zr" data-default-value="Hf Nb Ta Ti Zr"></label>
+                <label class="fixed-only">Ratios <input name="ratios" placeholder="eg. 1 1 1 1 1" data-default-value="1 1 1 1 1"></label>
+                <label class="binary-only">Element A <input name="element_a" placeholder="eg. Ti" data-default-value="Ti"></label>
+                <label class="binary-only">Element B <input name="element_b" placeholder="eg. Nb" data-default-value="Nb"></label>
+                <label class="binary-only">X Start <input name="x_start" type="number" step="0.01" placeholder="eg. 0.1" data-default-value="0.1"></label>
+                <label class="binary-only">X End <input name="x_end" type="number" step="0.01" placeholder="eg. 0.9" data-default-value="0.9"></label>
+                <label>Samples / Phase <input name="samples_per_phase" type="number" placeholder="eg. 2" data-default-value="2"></label>
+                <label>Supercell <input name="supercell" placeholder="eg. 3 3 3" data-default-value="3 3 3"></label>
+                <label>Seed <input name="seed" type="number" placeholder="eg. 42" data-default-value="42"></label>
+                <label>BCC Lattice <input name="lattice_bcc" type="number" step="0.001" placeholder="eg. 3.0" data-default-value="3.0"></label>
+                <label>FCC Lattice <input name="lattice_fcc" type="number" step="0.001" placeholder="eg. 3.6" data-default-value="3.6"></label>
+                <label>HCP Lattice <input name="lattice_hcp" type="number" step="0.001" placeholder="eg. 3.0" data-default-value="3.0"></label>
+                <label>HCP C/A <input name="hcp_c_over_a" type="number" step="0.001" placeholder="eg. 1.633" data-default-value="1.633"></label>
+                <label class="check"><input name="no_relax" type="checkbox"> No Relax</label>
+                <label class="wide path-field">Output Directory
+                    <span class="path-line">
+                        <input name="output_dir" value="{{ defaults.phase_dir }}" placeholder="eg. calculator_runs/phase_stability_results" data-default-path="{{ defaults.phase_dir }}">
+                        <button type="button" class="browse-btn">Browse</button>
+                    </span>
+                </label>
+            </div>
+            <div class="action-row">
+                <button class="primary-btn" type="submit">Run Phase Stability</button>
+                <button class="danger-btn stop-btn" type="button" data-stop disabled>Terminate Task</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="module-page" id="module-mechanical">
+        <div class="page-title">
+            <h2>Mechanical Properties</h2>
+            <p>Elastic Constants And Derived Mechanical Indicators</p>
+        </div>
+        <form class="task-form" data-kind="mechanical">
+            <div class="form-grid compact-form">
+                <label class="wide">CHGNet Model <select name="model" data-model-select><option value="">Default (0.3.0)</option></select></label>
+                <label class="wide path-field">Input Directory <span class="path-line"><input name="input_dir" value="{{ defaults.relaxed_dir }}" placeholder="eg. calculator_runs/relaxed_results" data-default-path="{{ defaults.relaxed_dir }}"><button type="button" class="browse-btn">Browse</button></span></label>
+                <label class="wide path-field">Output Directory <span class="path-line"><input name="output_dir" value="{{ defaults.mechanical_dir }}" placeholder="eg. calculator_runs/mechanical_results" data-default-path="{{ defaults.mechanical_dir }}"><button type="button" class="browse-btn">Browse</button></span></label>
+                <label>Input Format <select name="input_format"><option value="auto">Auto</option><option value="poscar">POSCAR</option><option value="cif">CIF</option></select></label>
+                <label>Strain Max <input name="strain_max" type="number" step="0.001" placeholder="eg. 0.006" data-default-value="0.006"></label>
+                <label>Points <input name="num_points" type="number" placeholder="eg. 5" data-default-value="5"></label>
+                <label>Fmax <input name="fmax" type="number" step="0.01" placeholder="eg. 0.03" data-default-value="0.03"></label>
+                <label>Max Steps <input name="max_steps" type="number" placeholder="eg. 80" data-default-value="80"></label>
+                <label class="check"><input name="recursive" type="checkbox"> Recursive</label>
+                <label class="check"><input name="relax_atoms" type="checkbox"> Relax Atoms</label>
+                <label class="check"><input name="write_structures" type="checkbox" checked> Write Structures</label>
+                <label class="check"><input name="plot" type="checkbox" checked> Plot</label>
+            </div>
+            <div class="action-row"><button class="primary-btn" type="submit">Run Mechanical Properties</button><button class="danger-btn stop-btn" type="button" data-stop disabled>Terminate Task</button></div>
+        </form>
+    </div>
+
+    <div class="module-page" id="module-stress">
+        <div class="page-title">
+            <h2>Stress-Strain</h2>
+            <p>Directional Stress-Strain Curves And Plots</p>
+        </div>
+        <form class="task-form" data-kind="stress">
+            <div class="form-grid compact-form">
+                <label class="wide">CHGNet Model <select name="model" data-model-select><option value="">Default (0.3.0)</option></select></label>
+                <label class="wide path-field">Input Directory <span class="path-line"><input name="input_dir" value="{{ defaults.relaxed_dir }}" placeholder="eg. calculator_runs/relaxed_results" data-default-path="{{ defaults.relaxed_dir }}"><button type="button" class="browse-btn">Browse</button></span></label>
+                <label class="wide path-field">Output Directory <span class="path-line"><input name="output_dir" value="{{ defaults.stress_dir }}" placeholder="eg. calculator_runs/stress_strain_results" data-default-path="{{ defaults.stress_dir }}"><button type="button" class="browse-btn">Browse</button></span></label>
+                <label>Direction <select name="direction"><option>xx</option><option>yy</option><option>zz</option><option>xy</option><option>xz</option><option>yz</option></select></label>
+                <label>Strain Start <input name="strain_start" type="number" step="0.001" placeholder="eg. -0.02" data-default-value="-0.02"></label>
+                <label>Strain End <input name="strain_end" type="number" step="0.001" placeholder="eg. 0.02" data-default-value="0.02"></label>
+                <label>Points <input name="num_points" type="number" placeholder="eg. 9" data-default-value="9"></label>
+                <label>Fmax <input name="fmax" type="number" step="0.01" placeholder="eg. 0.03" data-default-value="0.03"></label>
+                <label>Max Steps <input name="max_steps" type="number" placeholder="eg. 80" data-default-value="80"></label>
+                <label class="check"><input name="recursive" type="checkbox"> Recursive</label>
+                <label class="check"><input name="relax_atoms" type="checkbox"> Relax Atoms</label>
+                <label class="check"><input name="write_structures" type="checkbox" checked> Write Structures</label>
+                <label class="check"><input name="plot" type="checkbox" checked> Plot</label>
+            </div>
+            <div class="action-row"><button class="primary-btn" type="submit">Run Stress-Strain</button><button class="danger-btn stop-btn" type="button" data-stop disabled>Terminate Task</button></div>
+        </form>
+    </div>
+
+    <div class="module-page" id="module-md">
+        <div class="page-title">
+            <h2>Molecular Dynamics</h2>
+            <p>NVE / NVT / NPT Molecular Dynamics Runs</p>
+        </div>
+        <form class="task-form" data-kind="md">
+            <div class="form-grid compact-form">
+                <label class="wide">CHGNet Model <select name="model" data-model-select><option value="">Default (0.3.0)</option></select></label>
+                <label class="wide path-field">Input Directory <span class="path-line"><input name="input_dir" value="{{ defaults.relaxed_dir }}" placeholder="eg. calculator_runs/relaxed_results" data-default-path="{{ defaults.relaxed_dir }}"><button type="button" class="browse-btn">Browse</button></span></label>
+                <label class="wide path-field">Output Directory <span class="path-line"><input name="output_dir" value="{{ defaults.md_dir }}" placeholder="eg. calculator_runs/md_results" data-default-path="{{ defaults.md_dir }}"><button type="button" class="browse-btn">Browse</button></span></label>
+                <label>Input Format <select name="input_format"><option value="auto">Auto</option><option value="poscar">POSCAR</option><option value="cif">CIF</option></select></label>
+                <label>Ensemble <select name="ensemble"><option>nvt</option><option>nve</option><option>npt</option></select></label>
+                <label>Thermostat <input name="thermostat" placeholder="eg. Nose-Hoover" data-default-value="Nose-Hoover"></label>
+                <label>Temperature <input name="temperature" type="number" placeholder="eg. 1000" data-default-value="1000"></label>
+                <label>Timestep <input name="timestep" type="number" step="0.1" placeholder="eg. 2.0" data-default-value="2.0"></label>
+                <label>Pressure <input name="pressure" type="number" step="0.1" placeholder="eg. 1.0" data-default-value="1.0"></label>
+                <label>Steps <input name="steps" type="number" placeholder="eg. 1000" data-default-value="1000"></label>
+                <label>Log Interval <input name="loginterval" type="number" placeholder="eg. 10" data-default-value="10"></label>
+                <label>Device <input name="use_device" placeholder="eg. cpu / mps / cuda"></label>
+                <label class="check"><input name="recursive" type="checkbox"> Recursive</label>
+            </div>
+            <div class="action-row"><button class="primary-btn" type="submit">Run Molecular Dynamics</button><button class="danger-btn stop-btn" type="button" data-stop disabled>Terminate Task</button></div>
+        </form>
+    </div>
+</section>
+
+<aside class="inspector-panel">
+    <div class="status-card">
+        <div>
+            <span class="eyebrow">Current Task</span>
+            <strong id="task-title">Idle</strong>
+        </div>
+        <span class="status-pill idle" id="task-status">Idle</span>
+    </div>
+
+    <section class="side-page active" id="side-log">
+        <div class="log-toolbar">
+            <button class="danger-btn stop-btn" id="stop-task" type="button" disabled>Terminate Task</button>
+            <button class="ghost-btn" id="clear-log" type="button">Clear</button>
+        </div>
+        <pre id="run-log" class="run-log">Ready.</pre>
+    </section>
+</aside>
+
+<section class="preview-workbench" id="preview-workbench">
+    <div class="preview-workbench-head">
+        <div>
+            <span class="eyebrow">Preview Module</span>
+            <h2>Visualization Workbench</h2>
+            <p>Structure Viewer, Result Tables, Curves, Images, And Logs In One Large Scientific Preview Area.</p>
+        </div>
+        <div class="preview-filter">
+            <label>Result Type
+                <select id="preview-kind-filter">
+                    <option value="active">Follow Current Tab</option>
+                    <option value="all">All Outputs</option>
+                    <option value="generate">Structure Generation</option>
+                    <option value="relax">Relaxation</option>
+                    <option value="phase">Phase Stability</option>
+                    <option value="mechanical">Mechanical Properties</option>
+                    <option value="stress">Stress-Strain</option>
+                    <option value="md">Molecular Dynamics</option>
+                </select>
+            </label>
+            <button class="ghost-btn" id="preview-refresh" type="button">Refresh Preview</button>
+        </div>
+    </div>
+
+    <div class="preview-workbench-grid">
+        <aside class="preview-file-panel">
+            <div class="preview-file-panel-head">
+                <strong>Available Files</strong>
+                <span id="preview-file-count">0 Files</span>
+            </div>
+            <div class="preview-file-list" id="preview-file-list"></div>
+        </aside>
+        <div class="visual-panel">
+            <div class="visual-toolbar">
+                <div>
+                    <span class="eyebrow">Selected File</span>
+                    <strong id="visual-title">No File Selected</strong>
+                </div>
+                <div class="visual-actions">
+                    <button class="ghost-btn open-file-btn" id="open-local-file" type="button" disabled>Open Local File</button>
+                    <span class="visual-badge" id="visual-kind">Preview</span>
+                </div>
+            </div>
+            <div class="visual-stage" id="visual-stage">
+                <div class="visual-empty">
+                    Select A Structure, CSV, PNG, Or Log File From The Left List.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

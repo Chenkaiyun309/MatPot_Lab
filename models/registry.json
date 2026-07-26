@@ -1,0 +1,23 @@
+[
+  {
+    "id": "0.3.0",
+    "label": "CHGNet 0.3.0 — MPtrj (recommended)",
+    "file": "chgnet_0.3.0.pth.tar",
+    "builtin": true,
+    "default": true
+  },
+  {
+    "id": "0.2.0",
+    "label": "CHGNet 0.2.0 — legacy MPtrj",
+    "file": "chgnet_0.2.0.pth.tar",
+    "builtin": true,
+    "default": false
+  },
+  {
+    "id": "r2scan",
+    "label": "CHGNet R2SCAN — transfer-learned",
+    "file": "chgnet_r2scan.pth.tar",
+    "builtin": true,
+    "default": false
+  }
+]
